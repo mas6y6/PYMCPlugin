@@ -9,6 +9,9 @@ import java.util.HashMap;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.WebSocket;
@@ -40,7 +43,9 @@ import org.checkerframework.checker.units.qual.h;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.advancement.Advancement;
-import net.md_5.bungee.api.chat.TextComponent;;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 public class PYMCPlugin extends JavaPlugin {
     public String version = "1.0";
@@ -49,8 +54,22 @@ public class PYMCPlugin extends JavaPlugin {
     private WebSocketServer server;
     private int port;
     private String host;
-    private Dictionary<String, WebSocket> connectedClients = new Hashtable<>();
+    private HashMap<String, WebSocket> connectedClients = new HashMap<>();
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
+    public static Player getPlayerByUUID(String uuidString) {
+        try {
+            // Convert the string to a UUID
+            UUID uuid = UUID.fromString(uuidString);
+            // Get the player by UUID
+            Player player = Bukkit.getPlayer(uuid);
+            return player;
+        } catch (IllegalArgumentException e) {
+            // Handle the case where the string is not a valid UUID
+            System.out.println("Invalid UUID format: " + uuidString);
+            return null;
+        }
+    }
 
     @Override
     public void onEnable() {
@@ -78,6 +97,36 @@ public class PYMCPlugin extends JavaPlugin {
         getLogger().info("PYMC Plugin disabled!");
     }
 
+    public String playercommand_handler(List args) {
+        String returndata = "none";
+
+        if (args.isEmpty()) {
+            return "No player specified.";
+        }
+
+        Player player = getPlayerByUUID(args.get(0).toString());
+        if (player == null) {
+            return "nonexist";
+        }
+        args.remove(0);
+
+        if (args.get(0).equals("getplayer")) {
+            String name = player.getName();
+            String x = String.format("%.2f", player.getLocation().getX());
+            String y = String.format("%.2f", player.getLocation().getY());
+            String displayname = player.getDisplayName();
+            returndata = "!getplayer.return*" + name + "*" + displayname + "*" + x + "*" + y;
+        } else if (args.get(0).equals("giveitem")){
+            String itemid = args.get(1).toString().toUpperCase();
+            int quantity = Integer.parseInt(args.get(2).toString());
+            Material m_item = Material.getMaterial(itemid);
+            ItemStack item = new ItemStack(m_item,quantity);
+            player.getInventory().addItem(item);
+        }
+
+        return returndata;
+    }
+
     public void startWebSocketServer() {
         server = new WebSocketServer(new InetSocketAddress(host, port)) {
 
@@ -97,7 +146,17 @@ public class PYMCPlugin extends JavaPlugin {
             @Override
             public void onMessage(WebSocket conn, String message) {
                 getLogger().info("Message from " + conn.getRemoteSocketAddress() + ": " + message);
-
+                if (message.length() > 0 && message.charAt(0) == '!') {
+                    String argumentsraw1 = message.substring(1);
+                    String[] argumentsraw2 = argumentsraw1.split("\\*");
+                    List<String> argument = new ArrayList<>(Arrays.asList(argumentsraw2));
+                    getLogger().info(argument.toString());
+                    String command = argument.get(0);
+                    argument.remove(0);
+                    if (command.equals("player")) {
+                        conn.send(playercommand_handler(argument));
+                    }
+                }
             }
 
             @Override
@@ -111,6 +170,23 @@ public class PYMCPlugin extends JavaPlugin {
                 getLogger().info("WebSocket server started on port 8290");
             }
         };
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (String key : connectedClients.keySet()) {
+                        WebSocket client = connectedClients.get(key);
+                        if (client != null && client.isOpen()) {
+                            client.send("%ping");
+                        } else {
+                            getLogger().warning("Client " + key + " is not open or null.");
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 0, 5, TimeUnit.SECONDS);
         server.start();
     }
 }
