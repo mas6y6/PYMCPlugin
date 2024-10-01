@@ -6,9 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.HashMap;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.WebSocket;
+import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ClientHandshake;
 import java.net.InetSocketAddress;
 
@@ -36,7 +40,7 @@ import org.checkerframework.checker.units.qual.h;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.advancement.Advancement;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.TextComponent;;
 
 public class PYMCPlugin extends JavaPlugin {
     public String version = "1.0";
@@ -45,7 +49,8 @@ public class PYMCPlugin extends JavaPlugin {
     private WebSocketServer server;
     private int port;
     private String host;
-    private Set<WebSocket> connectedClients = new HashSet<>();
+    private Dictionary<String, WebSocket> connectedClients = new Hashtable<>();
+
 
     @Override
     public void onEnable() {
@@ -72,26 +77,20 @@ public class PYMCPlugin extends JavaPlugin {
         }
         getLogger().info("PYMC Plugin disabled!");
     }
-    public void broadcastMessage(String message) {
-        // Send a message to all connected clients
-        for (WebSocket conn : connectedClients) {
-            conn.send(message);
-        }
-    }
 
     public void startWebSocketServer() {
         server = new WebSocketServer(new InetSocketAddress(host, port)) {
 
             @Override
             public void onOpen(WebSocket conn, ClientHandshake handshake) {
-                getLogger().info("New connection from " + conn.getRemoteSocketAddress());
-                connectedClients.add(conn);
-                conn.send("pymc-");
+                getLogger().info("New connection from " + conn.getRemoteSocketAddress().toString());
+                connectedClients.put(conn.getLocalSocketAddress().toString(),conn);
+                conn.send("pymc_version="+version+"*ip="+conn.getLocalSocketAddress().toString());
             }
 
             @Override
             public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-                connectedClients.remove(conn);
+                connectedClients.remove(conn.getLocalSocketAddress().toString());
                 getLogger().info("Closed connection to " + conn.getRemoteSocketAddress());
             }
 
