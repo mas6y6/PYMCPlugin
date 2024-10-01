@@ -1,0 +1,4 @@
+name: PyMC
+version: 1.0
+main: com.pymc.MyPlugin
+api-version: 1.21
