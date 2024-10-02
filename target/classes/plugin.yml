@@ -1,4 +1,4 @@
 name: PyMC
-version: 1.0
+version: 1.55
 main: com.pymc.PYMCPlugin
 api-version: 1.21

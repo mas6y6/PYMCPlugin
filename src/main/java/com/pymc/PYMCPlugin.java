@@ -45,7 +45,10 @@ import org.bukkit.command.Command;
 import org.bukkit.advancement.Advancement;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 
 public class PYMCPlugin extends JavaPlugin {
     public String version = "1.0";
@@ -96,6 +99,49 @@ public class PYMCPlugin extends JavaPlugin {
         }
         getLogger().info("PYMC Plugin disabled!");
     }
+    public String bukkitcommand_handler(List args) {
+        String returndata = "none";
+        return returndata;
+    }
+
+    public String worldcommand_handler(List args) {
+        String returndata = "none";
+        World world = Bukkit.getWorld(args.get(0).toString());
+        if (world.equals(null)){
+            returndata = "worlddoesnotexist";
+        }
+        args.remove(0);
+
+        if (args.get(0).equals("getworld")) {
+            String d = "UNKNOWN";
+            if (world.getEnvironment() == World.Environment.NORMAL){
+                d = "NORMAL";
+            } else if (world.getEnvironment() == World.Environment.NETHER) {
+                d = "NETHER";
+            } else if (world.getEnvironment() == World.Environment.THE_END) {
+                d = "THE_END";
+            } else if (world.getEnvironment() == World.Environment.CUSTOM) {
+                d = "CUSTOM";
+            };
+            returndata = "world.return*"+world.getName()+"*"+d+"*"+world.getMinHeight()+"*"+world.getMaxHeight()+"*"+world.getSeed()+"*"+world.getDifficulty()+"*"+world.getLogicalHeight();
+        } else if (args.get(0).equals("setweather")) {
+            Bukkit.getScheduler().runTask(this, () -> {
+                if (args.get(1).equals("true")) {
+                    world.setStorm(true);
+                } else if (args.get(1).equals("false")) {
+                    world.setStorm(false);
+                }
+        
+                if (args.get(2).equals("true")) {
+                    world.setThundering(true);
+                } else if (args.get(2).equals("false")) {
+                    world.setThundering(false);
+                }
+            });
+        }
+
+        return returndata;
+    }
 
     public String playercommand_handler(List args) {
         String returndata = "none";
@@ -112,16 +158,38 @@ public class PYMCPlugin extends JavaPlugin {
 
         if (args.get(0).equals("getplayer")) {
             String name = player.getName();
-            String x = String.format("%.2f", player.getLocation().getX());
-            String y = String.format("%.2f", player.getLocation().getY());
             String displayname = player.getDisplayName();
-            returndata = "!getplayer.return*" + name + "*" + displayname + "*" + x + "*" + y;
+            String uuid = player.getUniqueId().toString();
+            returndata = "getplayer.return*" + name + "*" + displayname + "*" + uuid;
         } else if (args.get(0).equals("giveitem")){
             String itemid = args.get(1).toString().toUpperCase();
             int quantity = Integer.parseInt(args.get(2).toString());
             Material m_item = Material.getMaterial(itemid);
             ItemStack item = new ItemStack(m_item,quantity);
             player.getInventory().addItem(item);
+            returndata = "getplayer.return*success";
+        } else if (args.get(0).equals("removeitem")){
+                String itemid = args.get(1).toString().toUpperCase();
+                int quantity = Integer.parseInt(args.get(2).toString());
+                Material m_item = Material.getMaterial(itemid);
+                ItemStack item = new ItemStack(m_item,quantity);
+                player.getInventory().removeItem(item);
+                returndata = "getplayer.return*success";
+        } else if (args.get(0).equals("getloc")) {
+            String d = "UNKNOWN";
+            if (player.getWorld().getEnvironment() == World.Environment.NORMAL) {
+                d = "NORMAL";
+            } else if (player.getWorld().getEnvironment() == World.Environment.NETHER) {
+                d = "NETHER";
+            } else if (player.getWorld().getEnvironment() == World.Environment.THE_END) {
+                d = "THE_END";
+            } else {
+                d = "UNKNOWN";
+            }
+            String x = String.format("%.2f", player.getLocation().getX());
+            String y = String.format("%.2f", player.getLocation().getY());
+            String z = String.format("%.2f", player.getLocation().getZ());
+            returndata = "getplayer.location.return*"+d+"*"+player.getWorld().getName()+"*"+x+"*"+y+"*"+z;
         }
 
         return returndata;
@@ -146,16 +214,25 @@ public class PYMCPlugin extends JavaPlugin {
             @Override
             public void onMessage(WebSocket conn, String message) {
                 getLogger().info("Message from " + conn.getRemoteSocketAddress() + ": " + message);
-                if (message.length() > 0 && message.charAt(0) == '!') {
-                    String argumentsraw1 = message.substring(1);
-                    String[] argumentsraw2 = argumentsraw1.split("\\*");
-                    List<String> argument = new ArrayList<>(Arrays.asList(argumentsraw2));
-                    getLogger().info(argument.toString());
-                    String command = argument.get(0);
-                    argument.remove(0);
-                    if (command.equals("player")) {
-                        conn.send(playercommand_handler(argument));
+                try {
+                    if (message.length() > 0 && message.charAt(0) == '!') {
+                        String argumentsraw1 = message.substring(1);
+                        String[] argumentsraw2 = argumentsraw1.split("\\*");
+                        List<String> argument = new ArrayList<>(Arrays.asList(argumentsraw2));
+                        getLogger().info(argument.toString());
+                        String command = argument.get(0);
+                        argument.remove(0);
+                        if (command.equals("player")) {
+                            conn.send("!" + playercommand_handler(argument));
+                        } else if (command.equals("bukkit")) {
+                            conn.send("!" + bukkitcommand_handler(argument));
+                        } else if (command.equals("world")) {
+                            conn.send("!" + worldcommand_handler(argument));
+                        }
                     }
+                } catch (Exception e) {
+                    getLogger().warning(e.toString());
+                    conn.send("~~error*"+e);
                 }
             }
 
