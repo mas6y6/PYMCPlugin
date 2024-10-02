@@ -41,6 +41,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.util.StringUtil;
 import org.checkerframework.checker.units.qual.h;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.advancement.Advancement;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -57,8 +58,8 @@ public class PYMCPlugin extends JavaPlugin {
     private WebSocketServer server;
     private int port;
     private String host;
+    private boolean debug;
     private HashMap<String, WebSocket> connectedClients = new HashMap<>();
-    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public static Player getPlayerByUUID(String uuidString) {
         try {
@@ -80,6 +81,7 @@ public class PYMCPlugin extends JavaPlugin {
         config = this.getConfig();
         host = config.getString("config.host", "localhost");
         port = config.getInt("config.port", 8290);
+        debug = config.getBoolean("config.debuf", false);
         getLogger().info("PYMC Plugin enabled!");
         startWebSocketServer();
     }
@@ -160,7 +162,7 @@ public class PYMCPlugin extends JavaPlugin {
             String name = player.getName();
             String displayname = player.getDisplayName();
             String uuid = player.getUniqueId().toString();
-            returndata = "getplayer.return*" + name + "*" + displayname + "*" + uuid;
+            returndata = "getplayer.return*" + name + "*" + displayname + "*" + player.getCustomName() + "*" + uuid + "*" + player.getGameMode().toString() + "*" + player.getHealth() + "*" + player.getHealthScale() + "*" +player.getExp() + "*" + player.getExpToLevel() + "*" + player.getLevel() + "*" + player.getExhaustion() + "*" + player.getFoodLevel() + "*" + player.getSaturation() + "*" + player.getStarvationRate() + "*" + player.getFreezeTicks() + "*" + player.getRemainingAir() + "*" + player.getPlayerTime() + "*" + player.getLastPlayed() + "*" + player.getSleepTicks() + "*" + player.getFlySpeed() + "*" + player.getWalkSpeed() + "*" + player.getFireTicks() + "*" + player.getAddress() + "*" + player.getPing();
         } else if (args.get(0).equals("giveitem")){
             String itemid = args.get(1).toString().toUpperCase();
             int quantity = Integer.parseInt(args.get(2).toString());
@@ -190,6 +192,28 @@ public class PYMCPlugin extends JavaPlugin {
             String y = String.format("%.2f", player.getLocation().getY());
             String z = String.format("%.2f", player.getLocation().getZ());
             returndata = "getplayer.location.return*"+d+"*"+player.getWorld().getName()+"*"+x+"*"+y+"*"+z;
+        } else if (args.get(0).equals("setgamemode")) {
+            if (args.get(1).equals("s")) {
+                player.setGameMode(GameMode.SURVIVAL);
+                returndata = "getplayer.location.return*SURVIVAL";
+            } else if (args.get(1).equals("c")) {
+                player.setGameMode(GameMode.CREATIVE);
+                returndata = "getplayer.location.return*CREATIVE";
+            } else if (args.get(1).equals("a")) {
+                player.setGameMode(GameMode.ADVENTURE);
+                returndata = "getplayer.location.return*ADVENTURE";
+            } else if (args.get(1).equals("sp")) {
+                player.setGameMode(GameMode.SPECTATOR);
+                returndata = "getplayer.location.return*SPECTATOR";
+            }
+        } else if (args.get(0).equals("setcustomname")) {
+            player.setCustomName(args.get(1).toString());
+        } else if (args.get(0).equals("setdisplayname")) {
+            player.setDisplayName(args.get(1).toString());
+        } else if (args.get(0).equals("sendmessage")) {
+            player.sendMessage(args.get(1).toString());
+        } else if (args.get(0).equals("")) {
+            player.sendTitle(args.get(1).toString(),args.get(2).toString(),);
         }
 
         return returndata;
@@ -244,26 +268,9 @@ public class PYMCPlugin extends JavaPlugin {
             @Override
             public void onStart() {
                 isServerRunning = true;
-                getLogger().info("WebSocket server started on port 8290");
+                getLogger().info("PyMC "+host+":"+port);
             }
         };
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    for (String key : connectedClients.keySet()) {
-                        WebSocket client = connectedClients.get(key);
-                        if (client != null && client.isOpen()) {
-                            client.send("%ping");
-                        } else {
-                            getLogger().warning("Client " + key + " is not open or null.");
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 0, 5, TimeUnit.SECONDS);
         server.start();
     }
 }
