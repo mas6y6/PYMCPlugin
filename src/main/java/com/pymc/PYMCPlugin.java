@@ -114,6 +114,42 @@ public class PYMCPlugin extends JavaPlugin {
     }
     public String bukkitcommand_handler(List args) {
         String returndata = "none";
+        if (args.get(0).equals("test")) {
+            returndata = "bukkit.return*" +ChatColor.AQUA.toString();
+        }
+        return returndata;
+    }
+
+    public String locationcommand_handler(List args) {
+        String returndata = "none";
+        String world = args.get(0).toString();
+        args.remove(0);
+        String env = args.get(0).toString();
+        args.remove(0);
+        int x = Integer.parseInt(args.get(0).toString());
+        args.remove(0);
+        int y = Integer.parseInt(args.get(0).toString());
+        args.remove(0);
+        int z = Integer.parseInt(args.get(0).toString());
+        args.remove(0);
+        int pitch = Integer.parseInt(args.get(0).toString());
+        args.remove(0);
+        int direction = Integer.parseInt(args.get(0).toString());
+        args.remove(0);
+        int yaw = Integer.parseInt(args.get(0).toString());
+        args.remove(0);
+
+        if (args.get(0).toString().equals("getblock")) {
+            Block block = Bukkit.getWorld(world).getBlockAt(x,y,z);
+            String blockdata = block.getBlockData().getAsString();
+            String xb = String.valueOf(block.getX());
+            String yb = String.valueOf(block.getY());
+            String zb = String.valueOf(block.getZ());
+            String blocktype = block.getType().toString();
+            returndata = "location.block.return*"+xb+"*"+yb+"*"+zb+"*"+block.getBiome().toString()+"*"+blocktype+"*"+blockdata;
+        } else if (args.get(0).toString().equals("getlocation")) {
+
+        }
         return returndata;
     }
 
@@ -151,7 +187,7 @@ public class PYMCPlugin extends JavaPlugin {
                     world.setThundering(false);
                 }
             });
-        }
+        } 
 
         return returndata;
     }
@@ -202,7 +238,10 @@ public class PYMCPlugin extends JavaPlugin {
             String x = String.format("%.2f", player.getLocation().getX());
             String y = String.format("%.2f", player.getLocation().getY());
             String z = String.format("%.2f", player.getLocation().getZ());
-            returndata = "getplayer.location.return*"+d+"*"+player.getWorld().getName()+"*"+x+"*"+y+"*"+z;
+            String pitch = String.format("%.2f", player.getLocation().getPitch());
+            String direction = String.format("%.2f", player.getLocation().getDirection());
+            String yaw = String.format("%.2f", player.getLocation().getYaw());
+            returndata = "getplayer.location.return*"+d+"*"+player.getWorld().getName()+"*"+x+"*"+y+"*"+z+"*"+direction+"*"+pitch+"*"+yaw;
         } else if (args.get(0).equals("setgamemode")) {
             if (args.get(1).equals("s")) {
                 player.setGameMode(GameMode.SURVIVAL);
@@ -219,22 +258,30 @@ public class PYMCPlugin extends JavaPlugin {
             }
         } else if (args.get(0).equals("setcustomname")) {
             player.setCustomName(args.get(1).toString());
+            returndata = "getplayer.return*success";
         } else if (args.get(0).equals("setdisplayname")) {
             player.setDisplayName(args.get(1).toString());
+            returndata = "getplayer.return*success";
         } else if (args.get(0).equals("sendmessage")) {
             player.sendMessage(args.get(1).toString());
+            returndata = "getplayer.return*success";
         } else if (args.get(0).equals("sendtitle")) {
             int fadein = Integer.parseInt(args.get(3).toString());
             int stay = Integer.parseInt(args.get(4).toString());
             int fadeout = Integer.parseInt(args.get(5).toString());
             player.sendTitle(args.get(1).toString(),args.get(2).toString(),fadein,stay,fadeout);
+            returndata = "getplayer.return*success";
         } else if (args.get(0).equals("sendmessage")) {
             player.sendMessage(args.get(1).toString());
+            returndata = "getplayer.return*success";
         } else if (args.get(0).equals("addeffect")) {
             PotionEffect effect = new PotionEffect((Map<String, Object>) PotionEffectManager.getPotionEffectType(args.get(0).toString().toUpperCase()));
             player.addPotionEffect(effect);
+            returndata = "getplayer.return*success";
+        } else if (args.get(0).equals("sendactionbar")) {
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR,new TextComponent(args.get(1).toString()));
+                returndata = "getplayer.return*success";
         }
-
         return returndata;
     }
 
