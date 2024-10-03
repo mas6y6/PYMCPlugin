@@ -13,6 +13,7 @@ import java.util.Hashtable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import com.google.gson.Gson;
 
 import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.WebSocket;
@@ -116,6 +117,19 @@ public class PYMCPlugin extends JavaPlugin {
         String returndata = "none";
         if (args.get(0).equals("test")) {
             returndata = "bukkit.return*" +ChatColor.AQUA.toString();
+        } else if (args.get(0).equals("getallonlineplayers")) {
+            List<String> playerNames = new ArrayList<>();
+            Gson gson = new Gson();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                String name = player.getName();
+                String displayname = player.getDisplayName();
+                String uuid = player.getUniqueId().toString();
+                playerNames.add(name + "*" + displayname + "*" + player.getCustomName() + "*" + uuid + "*" + player.getGameMode().toString() + "*" + player.getHealth() + "*" + player.getHealthScale() + "*" +player.getExp() + "*" + player.getExpToLevel() + "*" + player.getLevel() + "*" + player.getExhaustion() + "*" + player.getFoodLevel() + "*" + player.getSaturation() + "*" + player.getStarvationRate() + "*" + player.getFreezeTicks() + "*" + player.getRemainingAir() + "*" + player.getPlayerTime() + "*" + player.getLastPlayed() + "*" + player.getSleepTicks() + "*" + player.getFlySpeed() + "*" + player.getWalkSpeed() + "*" + player.getFireTicks() + "*" + player.getAddress() + "*" + player.getPing());
+            }
+
+            String jsonPlayers = gson.toJson(playerNames);
+
+            returndata = jsonPlayers;
         }
         return returndata;
     }
