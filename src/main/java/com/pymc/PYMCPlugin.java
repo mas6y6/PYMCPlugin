@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
 import java.util.Dictionary;
@@ -22,6 +23,10 @@ import java.net.InetSocketAddress;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionEffectTypeCategory;
+import org.bukkit.potion.PotionType;
 import org.bukkit.entity.Player;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -38,6 +43,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.CommandSender.Spigot;
 import org.bukkit.util.StringUtil;
 import org.checkerframework.checker.units.qual.h;
 import org.bukkit.ChatColor;
@@ -50,6 +56,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.NamespacedKey;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionBrewer;
 
 public class PYMCPlugin extends JavaPlugin {
     public String version = "1.0";
@@ -59,6 +68,7 @@ public class PYMCPlugin extends JavaPlugin {
     private int port;
     private String host;
     private boolean debug;
+    private PotionEffectManager potionEffectManager;
     private HashMap<String, WebSocket> connectedClients = new HashMap<>();
 
     public static Player getPlayerByUUID(String uuidString) {
@@ -78,6 +88,7 @@ public class PYMCPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
+        potionEffectManager = new PotionEffectManager();
         config = this.getConfig();
         host = config.getString("config.host", "localhost");
         port = config.getInt("config.port", 8290);
@@ -212,8 +223,16 @@ public class PYMCPlugin extends JavaPlugin {
             player.setDisplayName(args.get(1).toString());
         } else if (args.get(0).equals("sendmessage")) {
             player.sendMessage(args.get(1).toString());
-        } else if (args.get(0).equals("")) {
-            player.sendTitle(args.get(1).toString(),args.get(2).toString(),);
+        } else if (args.get(0).equals("sendtitle")) {
+            int fadein = Integer.parseInt(args.get(3).toString());
+            int stay = Integer.parseInt(args.get(4).toString());
+            int fadeout = Integer.parseInt(args.get(5).toString());
+            player.sendTitle(args.get(1).toString(),args.get(2).toString(),fadein,stay,fadeout);
+        } else if (args.get(0).equals("sendmessage")) {
+            player.sendMessage(args.get(1).toString());
+        } else if (args.get(0).equals("addeffect")) {
+            PotionEffect effect = new PotionEffect((Map<String, Object>) PotionEffectManager.getPotionEffectType(args.get(0).toString().toUpperCase()));
+            player.addPotionEffect(effect);
         }
 
         return returndata;
