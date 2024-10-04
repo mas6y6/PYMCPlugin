@@ -48,6 +48,7 @@ import org.bukkit.command.CommandSender.Spigot;
 import org.bukkit.util.StringUtil;
 import org.checkerframework.checker.units.qual.h;
 import org.bukkit.ChatColor;
+import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.advancement.Advancement;
@@ -130,6 +131,16 @@ public class PYMCPlugin extends JavaPlugin {
             String jsonPlayers = gson.toJson(playerNames);
 
             returndata = jsonPlayers;
+        } else if (args.get(0).equals("getallworlds")) {
+            List<String> playerNames = new ArrayList<>();
+            Gson gson = new Gson();
+            for (World world : Bukkit.getWorlds()) {
+                playerNames.add(world.getName()+"*"+world.getEnvironment().toString()+"*"+world.getMinHeight()+"*"+world.getMaxHeight()+"*"+world.getSeed()+"*"+world.getDifficulty().toString()+"*"+world.getLogicalHeight());
+            }
+
+            String jsonPlayers = gson.toJson(playerNames);
+
+            returndata = jsonPlayers;
         }
         return returndata;
     }
@@ -176,17 +187,7 @@ public class PYMCPlugin extends JavaPlugin {
         args.remove(0);
 
         if (args.get(0).equals("getworld")) {
-            String d = "UNKNOWN";
-            if (world.getEnvironment() == World.Environment.NORMAL){
-                d = "NORMAL";
-            } else if (world.getEnvironment() == World.Environment.NETHER) {
-                d = "NETHER";
-            } else if (world.getEnvironment() == World.Environment.THE_END) {
-                d = "THE_END";
-            } else if (world.getEnvironment() == World.Environment.CUSTOM) {
-                d = "CUSTOM";
-            };
-            returndata = "world.return*"+world.getName()+"*"+d+"*"+world.getMinHeight()+"*"+world.getMaxHeight()+"*"+world.getSeed()+"*"+world.getDifficulty()+"*"+world.getLogicalHeight();
+            returndata = "world.return*"+world.getName()+"*"+world.getEnvironment().toString()+"*"+world.getMinHeight()+"*"+world.getMaxHeight()+"*"+world.getSeed()+"*"+world.getDifficulty()+"*"+world.getLogicalHeight();
         } else if (args.get(0).equals("setweather")) {
             Bukkit.getScheduler().runTask(this, () -> {
                 if (args.get(1).equals("true")) {
@@ -285,16 +286,30 @@ public class PYMCPlugin extends JavaPlugin {
             int fadeout = Integer.parseInt(args.get(5).toString());
             player.sendTitle(args.get(1).toString(),args.get(2).toString(),fadein,stay,fadeout);
             returndata = "getplayer.return*success";
-        } else if (args.get(0).equals("sendmessage")) {
-            player.sendMessage(args.get(1).toString());
-            returndata = "getplayer.return*success";
         } else if (args.get(0).equals("addeffect")) {
-            PotionEffect effect = new PotionEffect((Map<String, Object>) PotionEffectManager.getPotionEffectType(args.get(0).toString().toUpperCase()));
-            player.addPotionEffect(effect);
-            returndata = "getplayer.return*success";
+            PotionEffectType effectType = PotionEffectManager.getPotionEffectType(args.get(1).toString().toUpperCase());
+            int duration = Integer.parseInt(args.get(2).toString());
+            int amplifier = Integer.parseInt(args.get(3).toString());
+
+            if (effectType != null) {
+                PotionEffect effect = new PotionEffect(effectType, duration, amplifier);
+                player.addPotionEffect(effect);
+                returndata = "getplayer.return*success";
+            } else {
+                returndata = "getplayer.return*potionnotfound";
+            }
         } else if (args.get(0).equals("sendactionbar")) {
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR,new TextComponent(args.get(1).toString()));
                 returndata = "getplayer.return*success";
+        } else if (args.get(0).equals("cleareffects")) {
+            for (PotionEffect effect : player.getActivePotionEffects()) {
+                player.removePotionEffect(effect.getType());
+            }            
+            returndata = "getplayer.return*success";
+        } else if (args.get(0).equals("removeeffect")) {
+            PotionEffectType effectType = PotionEffectManager.getPotionEffectType(args.get(1).toString().toUpperCase());
+            player.removePotionEffect(effectType);
+            returndata = "getplayer.return*success";
         }
         return returndata;
     }
