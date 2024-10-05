@@ -61,6 +61,7 @@ import org.bukkit.block.Block;
 import org.bukkit.NamespacedKey;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionBrewer;
+import com.google.gson.JsonObject;
 
 public class PYMCPlugin extends JavaPlugin {
     public String version = "1.0";
@@ -141,6 +142,18 @@ public class PYMCPlugin extends JavaPlugin {
             String jsonPlayers = gson.toJson(playerNames);
 
             returndata = jsonPlayers;
+        } else if (args.get(0).equals("getallofflineplayers")) {
+            List<String> playerNames = new ArrayList<>();
+            Gson gson = new Gson();
+            for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
+                String name = player.getName();
+                String uuid = player.getUniqueId().toString();
+                playerNames.add(name + "*" + uuid + "*" + player.getFirstPlayed() + "*" + player.getLastPlayed());
+            }
+
+            String jsonPlayers = gson.toJson(playerNames);
+
+            returndata = jsonPlayers;
         }
         return returndata;
     }
@@ -171,7 +184,7 @@ public class PYMCPlugin extends JavaPlugin {
             String yb = String.valueOf(block.getY());
             String zb = String.valueOf(block.getZ());
             String blocktype = block.getType().toString();
-            returndata = "location.block.return*"+xb+"*"+yb+"*"+zb+"*"+block.getBiome().toString()+"*"+blocktype+"*"+blockdata;
+            returndata = xb+"*"+yb+"*"+zb+"*"+block.getBiome().toString()+"*"+blocktype+"*"+blockdata;
         } else if (args.get(0).toString().equals("getlocation")) {
 
         }
@@ -224,21 +237,21 @@ public class PYMCPlugin extends JavaPlugin {
             String name = player.getName();
             String displayname = player.getDisplayName();
             String uuid = player.getUniqueId().toString();
-            returndata = "getplayer.return*" + name + "*" + displayname + "*" + player.getCustomName() + "*" + uuid + "*" + player.getGameMode().toString() + "*" + player.getHealth() + "*" + player.getHealthScale() + "*" +player.getExp() + "*" + player.getExpToLevel() + "*" + player.getLevel() + "*" + player.getExhaustion() + "*" + player.getFoodLevel() + "*" + player.getSaturation() + "*" + player.getStarvationRate() + "*" + player.getFreezeTicks() + "*" + player.getRemainingAir() + "*" + player.getPlayerTime() + "*" + player.getLastPlayed() + "*" + player.getSleepTicks() + "*" + player.getFlySpeed() + "*" + player.getWalkSpeed() + "*" + player.getFireTicks() + "*" + player.getAddress() + "*" + player.getPing();
+            returndata = name + "*" + displayname + "*" + player.getCustomName() + "*" + uuid + "*" + player.getGameMode().toString() + "*" + player.getHealth() + "*" + player.getHealthScale() + "*" +player.getExp() + "*" + player.getExpToLevel() + "*" + player.getLevel() + "*" + player.getExhaustion() + "*" + player.getFoodLevel() + "*" + player.getSaturation() + "*" + player.getStarvationRate() + "*" + player.getFreezeTicks() + "*" + player.getRemainingAir() + "*" + player.getPlayerTime() + "*" + player.getLastPlayed() + "*" + player.getSleepTicks() + "*" + player.getFlySpeed() + "*" + player.getWalkSpeed() + "*" + player.getFireTicks() + "*" + player.getAddress() + "*" + player.getPing();
         } else if (args.get(0).equals("giveitem")){
             String itemid = args.get(1).toString().toUpperCase();
             int quantity = Integer.parseInt(args.get(2).toString());
             Material m_item = Material.getMaterial(itemid);
             ItemStack item = new ItemStack(m_item,quantity);
             player.getInventory().addItem(item);
-            returndata = "getplayer.return*success";
+            returndata = "success";
         } else if (args.get(0).equals("removeitem")){
                 String itemid = args.get(1).toString().toUpperCase();
                 int quantity = Integer.parseInt(args.get(2).toString());
                 Material m_item = Material.getMaterial(itemid);
                 ItemStack item = new ItemStack(m_item,quantity);
                 player.getInventory().removeItem(item);
-                returndata = "getplayer.return*success";
+                returndata = "success";
         } else if (args.get(0).equals("getloc")) {
             String d = "UNKNOWN";
             if (player.getWorld().getEnvironment() == World.Environment.NORMAL) {
@@ -256,36 +269,36 @@ public class PYMCPlugin extends JavaPlugin {
             String pitch = String.format("%.2f", player.getLocation().getPitch());
             String direction = String.format("%.2f", player.getLocation().getDirection());
             String yaw = String.format("%.2f", player.getLocation().getYaw());
-            returndata = "getplayer.location.return*"+d+"*"+player.getWorld().getName()+"*"+x+"*"+y+"*"+z+"*"+direction+"*"+pitch+"*"+yaw;
+            returndata = d+"*"+player.getWorld().getName()+"*"+x+"*"+y+"*"+z+"*"+direction+"*"+pitch+"*"+yaw;
         } else if (args.get(0).equals("setgamemode")) {
             if (args.get(1).equals("s")) {
                 player.setGameMode(GameMode.SURVIVAL);
-                returndata = "getplayer.location.return*SURVIVAL";
+                returndata = "SURVIVAL";
             } else if (args.get(1).equals("c")) {
                 player.setGameMode(GameMode.CREATIVE);
-                returndata = "getplayer.location.return*CREATIVE";
+                returndata = "CREATIVE";
             } else if (args.get(1).equals("a")) {
                 player.setGameMode(GameMode.ADVENTURE);
-                returndata = "getplayer.location.return*ADVENTURE";
+                returndata = "ADVENTURE";
             } else if (args.get(1).equals("sp")) {
                 player.setGameMode(GameMode.SPECTATOR);
-                returndata = "getplayer.location.return*SPECTATOR";
+                returndata = "gSPECTATOR";
             }
         } else if (args.get(0).equals("setcustomname")) {
             player.setCustomName(args.get(1).toString());
-            returndata = "getplayer.return*success";
+            returndata = "success";
         } else if (args.get(0).equals("setdisplayname")) {
             player.setDisplayName(args.get(1).toString());
-            returndata = "getplayer.return*success";
+            returndata = "uccess";
         } else if (args.get(0).equals("sendmessage")) {
             player.sendMessage(args.get(1).toString());
-            returndata = "getplayer.return*success";
+            returndata = "success";
         } else if (args.get(0).equals("sendtitle")) {
             int fadein = Integer.parseInt(args.get(3).toString());
             int stay = Integer.parseInt(args.get(4).toString());
             int fadeout = Integer.parseInt(args.get(5).toString());
             player.sendTitle(args.get(1).toString(),args.get(2).toString(),fadein,stay,fadeout);
-            returndata = "getplayer.return*success";
+            returndata = "success";
         } else if (args.get(0).equals("addeffect")) {
             PotionEffectType effectType = PotionEffectManager.getPotionEffectType(args.get(1).toString().toUpperCase());
             int duration = Integer.parseInt(args.get(2).toString());
@@ -294,22 +307,22 @@ public class PYMCPlugin extends JavaPlugin {
             if (effectType != null) {
                 PotionEffect effect = new PotionEffect(effectType, duration, amplifier);
                 player.addPotionEffect(effect);
-                returndata = "getplayer.return*success";
+                returndata = "success";
             } else {
-                returndata = "getplayer.return*potionnotfound";
+                returndata = "potionnotfound";
             }
         } else if (args.get(0).equals("sendactionbar")) {
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR,new TextComponent(args.get(1).toString()));
-                returndata = "getplayer.return*success";
+                returndata = "success";
         } else if (args.get(0).equals("cleareffects")) {
             for (PotionEffect effect : player.getActivePotionEffects()) {
                 player.removePotionEffect(effect.getType());
             }            
-            returndata = "getplayer.return*success";
+            returndata = "success";
         } else if (args.get(0).equals("removeeffect")) {
             PotionEffectType effectType = PotionEffectManager.getPotionEffectType(args.get(1).toString().toUpperCase());
             player.removePotionEffect(effectType);
-            returndata = "getplayer.return*success";
+            returndata = "success";
         }
         return returndata;
     }
@@ -333,27 +346,55 @@ public class PYMCPlugin extends JavaPlugin {
             @Override
             public void onMessage(WebSocket conn, String message) {
                 getLogger().info("Message from " + conn.getRemoteSocketAddress() + ": " + message);
+                JsonObject returndata = new JsonObject();
+                
+                String argumentsraw1 = message.substring(1);
+                String[] argumentsraw2 = argumentsraw1.split("\\*");
+                List<String> argument = new ArrayList<>(Arrays.asList(argumentsraw2));
+                String id = argument.get(0);
+                argument.remove(0);
+                
+                returndata.addProperty("id", id);
+                returndata.addProperty("status", "error");
+                returndata.addProperty("return", "Invalid command");
+            
+                getLogger().info("Full arguments: " + argument);
+            
                 try {
                     if (message.length() > 0 && message.charAt(0) == '!') {
-                        String argumentsraw1 = message.substring(1);
-                        String[] argumentsraw2 = argumentsraw1.split("\\*");
-                        List<String> argument = new ArrayList<>(Arrays.asList(argumentsraw2));
-                        getLogger().info(argument.toString());
+                        getLogger().info("Arguments after removal of ID: " + argument);
                         String command = argument.get(0);
+                        getLogger().info("Command: " + command);
                         argument.remove(0);
+                        
                         if (command.equals("player")) {
-                            conn.send("!" + playercommand_handler(argument));
+                            getLogger().info("Handling 'player' command");
+                            returndata.addProperty("return", playercommand_handler(argument).toString());
+                            returndata.addProperty("status", "success");
                         } else if (command.equals("bukkit")) {
-                            conn.send("!" + bukkitcommand_handler(argument));
+                            getLogger().info("Handling 'bukkit' command");
+                            returndata.addProperty("return", bukkitcommand_handler(argument).toString());
+                            returndata.addProperty("status", "success");
                         } else if (command.equals("world")) {
-                            conn.send("!" + worldcommand_handler(argument));
+                            getLogger().info("Handling 'world' command");
+                            returndata.addProperty("return", worldcommand_handler(argument).toString());
+                            returndata.addProperty("status", "success");
+                        } else {
+                            getLogger().info("Unknown command: " + command);
+                            returndata.addProperty("return", "Unknown command: " + command);
                         }
                     }
+                    getLogger().info("Final returndata: " + returndata.toString());
+                    conn.send(returndata.toString());
                 } catch (Exception e) {
-                    getLogger().warning(e.toString());
-                    conn.send("~~error*"+e);
+                    getLogger().warning("Error during message processing: " + e.toString());
+                    returndata.addProperty("return", e.toString());
+                    returndata.addProperty("status", "error");
+                    getLogger().info("Error returndata: " + returndata.toString());
+                    conn.send(returndata.toString());
                 }
             }
+            
 
             @Override
             public void onError(WebSocket conn, Exception ex) {
