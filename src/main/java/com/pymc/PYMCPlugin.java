@@ -185,8 +185,8 @@ public class PYMCPlugin extends JavaPlugin {
             String zb = String.valueOf(block.getZ());
             String blocktype = block.getType().toString();
             returndata = xb+"*"+yb+"*"+zb+"*"+block.getBiome().toString()+"*"+blocktype+"*"+blockdata;
-        } else if (args.get(0).toString().equals("getlocation")) {
-
+        } else if (args.get(0).toString().equals("getlocation")) {;
+            returndata = "";
         }
         return returndata;
     }
